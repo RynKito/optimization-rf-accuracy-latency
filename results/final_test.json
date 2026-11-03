@@ -1,0 +1,25 @@
+{
+  "default_rf": {
+    "test_f1": 0.9655172413793104,
+    "test_accuracy": 0.956140350877193,
+    "test_recall_malignant_as_class0": 0.9285714285714286,
+    "n_nodes": 3556,
+    "latency_median_ms": 4.36254999999619,
+    "latency_p95_ms": 7.096429999967313
+  },
+  "selected_config": {
+    "test_f1": 0.9655172413793104,
+    "test_accuracy": 0.956140350877193,
+    "test_recall_malignant_as_class0": 0.9285714285714286,
+    "n_nodes": 1488,
+    "latency_median_ms": 2.649050000002262,
+    "latency_p95_ms": 3.909470000047577
+  },
+  "selected_params": {
+    "n_estimators": 54,
+    "max_depth": 15,
+    "min_samples_split": 9,
+    "min_samples_leaf": 1,
+    "max_features": "log2"
+  }
+}
