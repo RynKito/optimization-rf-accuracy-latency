@@ -1,8 +1,8 @@
-# Accuracy-Latency Optimization of Random Forest Hyperparameters
+﻿# Accuracy-Latency Optimization of Random Forest Hyperparameters
 
-Hyperparameter optimization of a Random Forest classifier on the Breast Cancer Wisconsin dataset, comparing Default, Random Search and Optuna (TPE) under a prediction-latency constraint.
+Hyperparameter optimization of a Random Forest classifier on the Breast Cancer Wisconsin dataset, comparing Grid Search, Random Search and Optuna (TPE) under a prediction-latency constraint.
 
-> Status: Week 1 (formulation and project setup). Results will be added in later weeks.
+> Status: Week 2 (baseline done). Optimization results will be added in later weeks.
 
 ## 1. Problem
 
@@ -12,48 +12,66 @@ A Random Forest classifier detects malignant vs. benign tumors. Its hyperparamet
 
 ## 2. Optimization Formulation
 
-**Decision variables** x = (n_estimators, max_depth, min_samples_leaf, max_features)
+**Decision variables** x = (n_estimators, max_depth, min_samples_split, min_samples_leaf, max_features)
 
-| Variable | Type | Search range |
+| Variable | Type | Search space |
 |---|---|---|
-| n_estimators | integer | [10, 300] |
-| max_depth | integer | [2, 20] |
+| n_estimators | integer | [100, 800] |
+| max_depth | integer | [3, 20] |
+| min_samples_split | integer | [2, 20] |
 | min_samples_leaf | integer | [1, 10] |
-| max_features | float (fraction of features) | [0.1, 1.0] |
+| max_features | categorical | {sqrt, log2, None} |
 
-**Objective:** maximize the mean 5-fold cross-validated F1-score
+**Objective:** maximize the mean 5-fold cross-validated F1-score on the development set
 
     max  f(x) = F1_CV(x)
 
-**Constraints:**
+**Constraint:** median single-sample prediction latency must not exceed 5 ms
 
-    g(x) = latency_ms_per_sample(x) - 5 <= 0
-    x in the search ranges above
+    g(x) = latency_median_ms(x) - 5 <= 0
 
-Infeasible configurations (g(x) > 0) are rejected by a penalty: f(x) is set to 0.
+Infeasible configurations (g(x) > 0) are rejected: f(x) is set to 0 (penalty).
 
-**Assumptions:** fixed random seed for the model and CV folds; latency is measured on the same machine with the same procedure for all methods; the test set is never used for tuning.
+**Multi-objective view (Week 4):** maximize F1 and minimize latency (and complexity = total tree nodes); report the Pareto front.
+
+**Assumptions:** fixed seed for data split, CV folds and model; latency measured on the same machine with warm-up (10 calls) then 100 timed single-sample predictions (median and p95); the test set is never used for tuning.
+
+**Latency threshold:** fixed at 5 ms before any optimization, based on the baseline median (about 4.2 ms). It is not changed after seeing Optuna results.
 
 ## 3. Dataset
 
 - Breast Cancer Wisconsin (Diagnostic), loaded via `sklearn.datasets.load_breast_cancer`
 - 569 samples, 30 numeric features, binary target
 - Source: UCI Machine Learning Repository (Street, Wolberg and Mangasarian, 1993)
-- Split: stratified 80% train+validation (5-fold CV) / 20% held-out test
+- Split: stratified 80% development (455 samples, 5-fold CV) / 20% locked test (114 samples), seed 42
 
 ## 4. Method
 
 | Method | Role | Budget |
 |---|---|---|
-| Default Random Forest (scikit-learn defaults) | Baseline 1 | 1 config |
-| Random Search | Baseline 2 | 40 trials |
-| Optuna TPE | Main method | 40 trials |
+| Default Random Forest (scikit-learn defaults) | Baseline | 1 config |
+| Grid Search | Comparison | 36 configs (3x3x2x2 grid) |
+| Random Search | Comparison | 36 trials |
+| Optuna TPE | Main method | 36 trials |
 
-All methods use the same data, folds, metric and budget. Stochastic methods are repeated with 10 seeds and reported as mean ± std. The test set is evaluated once, only for the final chosen configuration.
+All methods use the same data, folds, metric, constraint and budget. Stochastic methods are repeated with 10 seeds and reported as mean +/- std. The test set is evaluated once, only for the final chosen configuration after refitting on the full development set.
+
+Grid used: n_estimators {100, 300, 500}, max_depth {5, 10, 20}, min_samples_leaf {1, 4}, max_features {sqrt, None}; min_samples_split fixed at 2.
 
 ## 5. Key Results
 
-_To be added in Week 4._
+### Baseline (default Random Forest, 5 repeated measurements)
+
+| Metric | Value |
+|---|---|
+| CV F1 (5-fold, dev set) | 0.9699 |
+| Latency median (ms) | 4.10 - 4.30 |
+| Latency p95 (ms) | 4.88 - 5.43 |
+| Total tree nodes | 3556 (100 trees) |
+
+Latency varies by a few tenths of a millisecond between runs on the same machine, so all methods are measured in the same session with background applications closed.
+
+Optimization results: _to be added in Week 4._
 
 ## 6. How to Run
 
@@ -63,23 +81,12 @@ cd optimization-rf-accuracy-latency
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+python src/baseline.py
 ```
 
-Python version: 3.12.6. Main notebook: _to be added_.
+Python version: 3.12.6. Seed: 42. Baseline output: `results/baseline.csv`.
 
 ## 7. Repository Structure
-
-```
-├─ README.md
-├─ requirements.txt
-├─ notebooks/   # experiments
-├─ src/         # reusable code
-├─ results/     # CSV/JSON logs
-├─ figures/     # plots
-├─ report/      # PDF report
-└─ data/        # data notes
-```
-
 ## 8. Limitations
 
 _To be added in Week 5._
