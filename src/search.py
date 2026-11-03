@@ -2,13 +2,14 @@
 import numpy as np
 import pandas as pd
 import optuna
-from common import load_data, evaluate, SEED
+from common import load_data, evaluate, SEED, LATENCY_LIMIT_MS
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 BUDGET = 36
+N_EST_RANGE = (10, 150)
 
 GRID = {
-    "n_estimators": [100, 300, 500],
+    "n_estimators": [20, 60, 100],
     "max_depth": [5, 10, 20],
     "min_samples_leaf": [1, 4],
     "max_features": ["sqrt", None],
@@ -16,9 +17,10 @@ GRID = {
 
 
 def score(params, X, y, seed):
-    """Objective co phat rang buoc: infeasible -> 0."""
+    """Objective voi phat mem: F1 - 0.5 * max(0, latency - limit) / limit."""
     res = evaluate(params, X, y, seed=seed)
-    res["objective"] = res["cv_f1"] if res["feasible"] else 0.0
+    over = max(0.0, res["latency_median_ms"] - LATENCY_LIMIT_MS)
+    res["objective"] = res["cv_f1"] - 0.5 * over / LATENCY_LIMIT_MS
     return res
 
 
@@ -38,7 +40,7 @@ def run_grid(X, y, seed):
 
 def sample_random(rng):
     return {
-        "n_estimators": int(rng.integers(100, 801)),
+        "n_estimators": int(rng.integers(N_EST_RANGE[0], N_EST_RANGE[1] + 1)),
         "max_depth": int(rng.integers(3, 21)),
         "min_samples_split": int(rng.integers(2, 21)),
         "min_samples_leaf": int(rng.integers(1, 11)),
@@ -60,7 +62,7 @@ def run_optuna(X, y, seed):
 
     def objective(trial):
         params = {
-            "n_estimators": trial.suggest_int("n_estimators", 100, 800),
+            "n_estimators": trial.suggest_int("n_estimators", *N_EST_RANGE),
             "max_depth": trial.suggest_int("max_depth", 3, 20),
             "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
             "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 10),
@@ -84,7 +86,9 @@ if __name__ == "__main__":
         print("Running", name, "...")
         all_rows += fn(X_dev, y_dev, seed)
     df = pd.DataFrame(all_rows)
-    df["best_so_far"] = df.groupby("method")["objective"].cummax()
+    df["feas_f1"] = np.where(df["feasible"], df["cv_f1"], 0.0)
+    df["best_feasible_f1"] = df.groupby("method")["feas_f1"].cummax()
+    df = df.drop(columns="feas_f1")
     df.to_csv(f"results/trials_seed{seed}.csv", index=False)
-    print(df.groupby("method")[["objective", "cv_f1", "latency_median_ms"]].agg(["max", "mean"]).round(4).to_string())
+    print(df.groupby("method")[["best_feasible_f1"]].max().round(4).to_string())
     print("Feasible trials:", df.groupby("method")["feasible"].sum().to_dict())

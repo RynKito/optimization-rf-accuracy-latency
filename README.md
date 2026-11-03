@@ -16,7 +16,7 @@ A Random Forest classifier detects malignant vs. benign tumors. Its hyperparamet
 
 | Variable | Type | Search space |
 |---|---|---|
-| n_estimators | integer | [100, 800] |
+| n_estimators | integer | [10, 150] |
 | max_depth | integer | [3, 20] |
 | min_samples_split | integer | [2, 20] |
 | min_samples_leaf | integer | [1, 10] |
@@ -30,7 +30,7 @@ A Random Forest classifier detects malignant vs. benign tumors. Its hyperparamet
 
     g(x) = latency_median_ms(x) - 5 <= 0
 
-Infeasible configurations (g(x) > 0) are rejected: f(x) is set to 0 (penalty).
+Infeasible configurations are penalized (soft penalty): objective = F1_CV - 0.5 * max(0, latency - 5) / 5. Reported results use only feasible configurations (latency median <= 5 ms).
 
 **Multi-objective view (Week 4):** maximize F1 and minimize latency (and complexity = total tree nodes); report the Pareto front.
 
@@ -56,7 +56,11 @@ Infeasible configurations (g(x) > 0) are rejected: f(x) is set to 0 (penalty).
 
 All methods use the same data, folds, metric, constraint and budget. Stochastic methods are repeated with 10 seeds and reported as mean +/- std. The test set is evaluated once, only for the final chosen configuration after refitting on the full development set.
 
-Grid used: n_estimators {100, 300, 500}, max_depth {5, 10, 20}, min_samples_leaf {1, 4}, max_features {sqrt, None}; min_samples_split fixed at 2.
+Grid used: n_estimators {20, 60, 100}, max_depth {5, 10, 20}, min_samples_leaf {1, 4}, max_features {sqrt, None}; min_samples_split fixed at 2.
+
+### Pilot run and search-space revision
+
+A pilot run (seed 42, n_estimators in [100, 800], hard penalty) found 0 feasible trials for Random Search and 1 for Optuna, because almost the whole space exceeded 5 ms (see results/pilot_trials_seed42.csv). Before the main experiments, n_estimators was reduced to [10, 150] and a soft penalty was adopted for all methods. The test set was not used for this decision.
 
 ## 5. Key Results
 
@@ -94,3 +98,4 @@ _To be added in Week 5._
 ## 9. AI assistance
 
 AI tools (Claude) were used to help plan the project and draft code and documentation. All formulations, code and results are checked and understood by the author.
+
