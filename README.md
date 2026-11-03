@@ -75,7 +75,23 @@ A pilot run (seed 42, n_estimators in [100, 800], hard penalty) found 0 feasible
 
 Latency varies by a few tenths of a millisecond between runs on the same machine, so all methods are measured in the same session with background applications closed.
 
-Optimization results: _to be added in Week 4._
+Optimization results (10 seeds, 36 trials per method, latency limit 5 ms on median):
+
+| Method | Best feasible CV F1 (mean +/- std) | Feasible trials (/36) | Runtime (s) |
+|---|---|---|---|
+| Grid Search | 0.9718 +/- 0.0024 | 35.9 | 30.9 |
+| Optuna TPE | 0.9718 +/- 0.0021 | 32.0 | 32.5 |
+| Random Search | 0.9702 +/- 0.0018 | 28.5 | 38.1 |
+
+Differences between methods are smaller than the seed-to-seed std, so no method is claimed to be better. Optuna matches the hand-designed grid while searching a wider space. Latency-threshold sensitivity (4/5/6 ms) does not change this conclusion (results/sensitivity.csv).
+
+Pareto front (NSGA-II, F1 vs latency, 5 seeds pooled, 9 non-dominated points): F1 saturates around 0.97 from about 1.6 ms. Selected candidate (rule: max CV F1 s.t. latency <= 5 ms): n_estimators=54, max_depth=15, min_samples_split=9, min_samples_leaf=1, max_features=log2, CV F1 0.9719, latency 2.23 ms. The default Random Forest (100 trees, 0.9699, about 4.2 ms) is dominated by this configuration.
+
+![Convergence](figures/convergence_mean.png)
+![Pareto](figures/pareto_front.png)
+![F1 vs latency](figures/f1_vs_latency.png)
+
+Test-set result: _to be added in Week 5 (single evaluation)._
 
 ## 6. How to Run
 
@@ -98,4 +114,5 @@ _To be added in Week 5._
 ## 9. AI assistance
 
 AI tools (Claude) were used to help plan the project and draft code and documentation. All formulations, code and results are checked and understood by the author.
+
 
