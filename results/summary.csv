@@ -1,0 +1,4 @@
+method,f1_mean,f1_std,feas_mean,runtime_mean
+grid,0.9718,0.0024,35.9,30.8965
+optuna_tpe,0.9718,0.0021,32.0,32.5281
+random,0.9702,0.0018,28.5,38.142
