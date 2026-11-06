@@ -2,7 +2,7 @@
 
 Hyperparameter optimization of a Random Forest classifier on the Breast Cancer Wisconsin dataset, comparing Grid Search, Random Search and Optuna (TPE) under a prediction-latency constraint.
 
-> Status: Week 2 (baseline done). Optimization results will be added in later weeks.
+> Status: v1.0 (final submission). Full report: report/BaoCao_BTL_NhapMonToiUuHoa_HuynhVuThanh.docx
 
 ## 1. Problem
 
@@ -91,7 +91,14 @@ Pareto front (NSGA-II, F1 vs latency, 5 seeds pooled, 9 non-dominated points): F
 ![Pareto](figures/pareto_front.png)
 ![F1 vs latency](figures/f1_vs_latency.png)
 
-Test-set result: _to be added in Week 5 (single evaluation)._
+Test-set result (single evaluation on the locked 114-sample test set, after refitting on the full development set; results/final_test.json):
+
+| Model | Test F1 | Test accuracy | Latency median (ms) | Latency p95 (ms) | Tree nodes |
+|---|---|---|---|---|---|
+| Default Random Forest | 0.9655 | 0.9561 | 4.36 | 7.10 | 3556 |
+| Selected configuration | 0.9655 | 0.9561 | 2.65 | 3.91 | 1488 |
+
+Both models classify the test set identically. The selected configuration (n_estimators=54, max_depth=15, min_samples_split=9, min_samples_leaf=1, max_features=log2) is about 1.6x faster (median) and about 2.4x smaller (nodes). With only 114 test samples, one sample is about 0.9% accuracy, so the conclusion is "same quality, cheaper", not "more accurate".
 
 ## 6. How to Run
 
@@ -109,10 +116,16 @@ Python version: 3.12.6. Seed: 42. Baseline output: `results/baseline.csv`.
 ## 7. Repository Structure
 ## 8. Limitations
 
-_To be added in Week 5._
+- Latency is noisy and machine-dependent; the constraint uses the median, so p95 can exceed the limit (the default model has p95 7.10 ms on the test run).
+- One small dataset; differences between search methods are smaller than the seed-to-seed std.
+- The selected candidate is picked from a pooled 5-seed Pareto set, so its CV F1 is slightly optimistic; the single test evaluation is the unbiased check.
+- Grid Search is deterministic and its grid was hand-designed in the promising region.
+- The test set has only 114 samples, so test estimates have wide confidence intervals.
+- Latency was measured on a laptop (Intel Core i5-11400H, CPU only), not on a real deployment device.
 
 ## 9. AI assistance
 
 AI tools (Claude) were used to help plan the project and draft code and documentation. All formulations, code and results are checked and understood by the author.
+
 
 
