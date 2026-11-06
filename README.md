@@ -2,7 +2,7 @@
 
 Hyperparameter optimization of a Random Forest classifier on the Breast Cancer Wisconsin dataset, comparing Grid Search, Random Search and Optuna (TPE) under a prediction-latency constraint.
 
-> Status: v1.0 (final submission). Full report: report/BaoCao_BTL_NhapMonToiUuHoa_HuynhVuThanh.docx
+> Status: v1.0 (final submission). Full report: report/BaoCao_NhapMonToiUuHoa_HuynhVuThanh.docx
 
 ## 1. Problem
 
@@ -126,6 +126,7 @@ Python version: 3.12.6. Seed: 42. Baseline output: `results/baseline.csv`.
 ## 9. AI assistance
 
 AI tools (Claude) were used to help plan the project and draft code and documentation. All formulations, code and results are checked and understood by the author.
+
 
 
 
